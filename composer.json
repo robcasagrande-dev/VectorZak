@@ -1,0 +1,15 @@
+{
+    "name": "kalihotels/vectorzak",
+    "description": "Integration between Vector POS and ZaK PMS.",
+    "type": "project",
+    "require": {
+        "php": ">=8.0",
+        "phpoffice/phpspreadsheet": "^3.0",
+        "guzzlehttp/guzzle": "^7.8"
+    },
+    "autoload": {
+        "psr-4": {
+            "VectorZak\\": "src/"
+        }
+    }
+}
