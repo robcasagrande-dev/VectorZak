@@ -330,4 +330,54 @@ class ZakApiClient {
             return ['status' => 'error', 'message' => "Excepción al agregar Extra para Comprobante #$invoiceNumber: " . $e->getMessage()];
         }
     }
+
+    /**
+     * Fetch reservation details by its human-readable reservation code (rcode).
+     */
+    public function fetchReservationByCode($rcode) {
+        if (!$this->client) {
+            // Mock data for local testing
+            return [
+                'id' => 27851768,
+                'id_human' => $rcode,
+                'dfrom' => '01/06/2026',
+                'dto' => '04/06/2026',
+                'guest_name' => 'Alexander Rogstad Rustand'
+            ];
+        }
+        
+        $response = $this->client->post("reservations/fetch_one_reservation", [
+            'form_params' => [
+                'rcode' => $rcode
+            ]
+        ]);
+        
+        $data = json_decode($response->getBody(), true);
+        if (isset($data['error'])) {
+            throw new \Exception($data['error']);
+        }
+        
+        $res = $data['data'] ?? null;
+        if (!$res) {
+            throw new \Exception("Reserva no encontrada en ZaK.");
+        }
+        
+        $rooms = $res['rooms'] ?? [];
+        if (count($rooms) === 0) {
+            throw new \Exception("La reserva no tiene habitaciones asociadas.");
+        }
+        
+        // Fetch real guest name
+        $bookerId = $res['booker'] ?? null;
+        $guestName = $this->fetchCustomerName($bookerId);
+        
+        return [
+            'id' => $res['id'],
+            'id_human' => $res['id_human'],
+            'dfrom' => $rooms[0]['dfrom'],
+            'dto' => $rooms[0]['dto'],
+            'guest_name' => $guestName
+        ];
+    }
 }
+

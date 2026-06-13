@@ -40,6 +40,8 @@ $isLoggedIn = isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true;
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
         .logout-btn { background-color: #dc3545; width: auto; padding: 0.5rem 1rem; font-size: 0.875rem; }
         .logout-btn:hover { background-color: #c82333; }
+        .btn-sync { background-color: #00bcd4; font-weight: bold; }
+        .btn-sync:hover { background-color: #0097a7; }
     </style>
 </head>
 <body>
@@ -84,6 +86,17 @@ $isLoggedIn = isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true;
             </div>
             <button type="submit" name="upload">Procesar Archivo</button>
         </form>
+        
+        <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #eaeaea;">
+            <h3 style="font-size: 1.1rem; color: #555; text-align: center; margin-top: 0;">Sincronizar Reserva Específica (Directo)</h3>
+            <form action="sync_direct.php" method="POST" style="margin: 0;">
+                <div class="form-group">
+                    <label for="rcode">Código de Reserva ZaK (ej: SS-0175, LF-0071):</label>
+                    <input type="text" id="rcode" name="rcode" placeholder="Escriba el código de reserva..." required style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; text-transform: uppercase;">
+                </div>
+                <button type="submit" class="btn-sync">Sincronizar desde VectorPOS</button>
+            </form>
+        </div>
         
         <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #eaeaea;">
             <h3 style="font-size: 1.1rem; color: #555; text-align: center; margin-top: 0;">Mantenimiento</h3>
