@@ -42,9 +42,9 @@ if (isset($_GET['action']) && $_GET['action'] === 'sync_single') {
         'invoice' => $inv['facturaId'],
         'amount' => $inv['total'],
         'date' => $inv['fecha'],
-        'time' => '',
+        'time' => $inv['time'] ?? '',
         'waiter' => $inv['vendedor'],
-        'table' => ''
+        'table' => $inv['table'] ?? ''
     ];
     
     $res = $zakApi->appendNoteToReservation($resStub, $row);
@@ -128,6 +128,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             // Fecha
                             $fecha = $item['Fecha'] ?? '';
                             
+                            // Hrs / Time
+                            $time = trim($item['Hrs'] ?? '');
+                            
+                            // Mesa / Table
+                            $mesa = trim(strip_tags($item['Mesa'] ?? ''));
+                            
                             // Vendedor / Cajero fallback
                             $vendedor = trim($item['Vendedor'] ?? '');
                             if (empty($vendedor)) {
@@ -138,7 +144,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 'facturaId' => $facturaId,
                                 'total' => $total,
                                 'fecha' => $fecha,
-                                'vendedor' => $vendedor
+                                'vendedor' => $vendedor,
+                                'time' => $time,
+                                'table' => $mesa
                             ];
                         }
                     }
@@ -217,6 +225,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <tr>
                             <th>Factura</th>
                             <th>Fecha</th>
+                            <th>Hora</th>
+                            <th>Mesa</th>
                             <th>Vendedor</th>
                             <th style="text-align: right;">Total</th>
                         </tr>
@@ -226,6 +236,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <tr>
                                 <td style="font-weight: bold; color: #0056b3;">#<?= htmlspecialchars($inv['facturaId']) ?></td>
                                 <td><?= htmlspecialchars($inv['fecha']) ?></td>
+                                <td><?= htmlspecialchars($inv['time']) ?></td>
+                                <td><?= htmlspecialchars($inv['table']) ?></td>
                                 <td><?= htmlspecialchars($inv['vendedor']) ?></td>
                                 <td style="text-align: right; font-weight: bold; color: #28a745;">$<?= number_format($inv['total'], 0, ',', '.') ?> COP</td>
                             </tr>
