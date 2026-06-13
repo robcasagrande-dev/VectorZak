@@ -147,11 +147,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ]);
                 
                 // VectorPOS Login
-                $loginUrl = "https://app.vectorpos.com.co/index.php?r=site/login";
+                $loginUrl = "https://pos.vectorpos.com.co/index.php?r=site/login";
                 $client->post($loginUrl, [
                     'form_params' => [
-                        'email' => VECTOR_USER,
-                        'pw' => VECTOR_PASS
+                        'LoginForm[username]' => VECTOR_USER,
+                        'LoginForm[password]' => VECTOR_PASS,
+                        'LoginForm[rememberMe]' => '1'
                     ]
                 ]);
                 
@@ -160,71 +161,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $relResp = $client->get($posUrl);
                 $html = $relResp->getBody()->getContents();
                 
-                // DOM Parse HTML
-                $dom = new \DOMDocument();
-                libxml_use_internal_errors(true);
-                $dom->loadHTML($html);
-                libxml_clear_errors();
-                $xpath = new \DOMXPath($dom);
-                
-                $rows = $xpath->query('//table//tr');
-                $headerMap = [];
-                $headerIndex = -1;
-                
-                for ($i = 0; $i < $rows->length; $i++) {
-                    $row = $rows->item($i);
-                    $ths = $row->getElementsByTagName('th');
-                    if ($ths->length > 0) {
-                        for ($j = 0; $j < $ths->length; $j++) {
-                            $headerMap[trim($ths->item($j)->textContent)] = $j;
+                // Parse dynamic data from javascript JSON array using Regex
+                if (preg_match('/const\s+datosOriginales_[a-zA-Z0-9]+\s*=\s*(\[.*?\]);/s', $html, $matches)) {
+                    $data = json_decode($matches[1], true);
+                    if (is_array($data)) {
+                        foreach ($data as $item) {
+                            $doc = isset($item['Documento Cliente']) ? trim($item['Documento Cliente']) : '';
+                            if ($doc === $rcode) {
+                                // Extract and clean factura ID from button HTML string
+                                $facturaHtml = $item['Factura'] ?? '';
+                                $facturaId = trim(strip_tags($facturaHtml));
+                                
+                                // Total
+                                $totalRaw = $item['Total Pagado'] ?? '0';
+                                $total = (float) preg_replace('/[^0-9.]/', '', $totalRaw);
+                                
+                                // Fecha
+                                $fecha = $item['Fecha'] ?? '';
+                                
+                                // Vendedor / Cajero fallback
+                                $vendedor = trim($item['Vendedor'] ?? '');
+                                if (empty($vendedor)) {
+                                    $vendedor = trim($item['Cajero'] ?? '');
+                                }
+                                
+                                $cleanInvoices[] = [
+                                    'facturaId' => $facturaId,
+                                    'total' => $total,
+                                    'fecha' => $fecha,
+                                    'vendedor' => $vendedor
+                                ];
+                            }
                         }
-                        $headerIndex = $i;
-                        break;
                     }
-                }
-                
-                if (count($headerMap) === 0 && $rows->length > 0) {
-                    $cells = $rows->item(0)->getElementsByTagName('td');
-                    if ($cells->length > 0) {
-                        for ($j = 0; $j < $cells->length; $j++) {
-                            $headerMap[trim($cells->item($j)->textContent)] = $j;
-                        }
-                        $headerIndex = 0;
-                    }
-                }
-                
-                $docCol = getColIndex($headerMap, ["Documento Cliente", "Doc. Cliente", "Documento", "Identificación", "Identificacion", "Doc"]);
-                $facCol = getColIndex($headerMap, ["Factura", "No. Factura", "Nro Factura", "ID Factura", "Consecutivo", "Factura ID"]);
-                $totCol = getColIndex($headerMap, ["Total Pagado", "Total", "Valor", "Monto", "Neto", "Pagado"]);
-                $dateCol = getColIndex($headerMap, ["Fecha", "Fecha Factura", "Día", "Dia"]);
-                $vendCol = getColIndex($headerMap, ["Vendedor", "Mesero", "Usuario", "Atendió", "Atendio", "Operador"]);
-                
-                $maxIndex = max($docCol, $facCol, $totCol, $dateCol, $vendCol);
-                
-                for ($i = $headerIndex + 1; $i < $rows->length; $i++) {
-                    $row = $rows->item($i);
-                    $cells = $row->getElementsByTagName('td');
-                    if ($cells->length === 0 || $cells->length <= $maxIndex) {
-                        continue;
-                    }
-                    
-                    $clientDoc = $docCol !== -1 ? getCleanCellText($cells->item($docCol)) : "";
-                    
-                    if (trim($clientDoc) === $rcode) {
-                        $facturaId = $facCol !== -1 ? getCleanCellText($cells->item($facCol)) : "";
-                        $totalRaw = $totCol !== -1 ? getCleanCellText($cells->item($totCol)) : "0";
-                        $fecha = $dateCol !== -1 ? getCleanCellText($cells->item($dateCol)) : "";
-                        $vendedor = $vendCol !== -1 ? getCleanCellText($cells->item($vendCol)) : "";
-                        
-                        $total = (float) preg_replace('/[^0-9.]/', '', $totalRaw);
-                        
-                        $cleanInvoices[] = [
-                            'facturaId' => $facturaId,
-                            'total' => $total,
-                            'fecha' => $fecha,
-                            'vendedor' => $vendedor
-                        ];
-                    }
+                } else {
+                    throw new \Exception("No se pudo parsear la tabla de facturas de VectorPOS.");
                 }
                 
             } catch (\Exception $e) {
