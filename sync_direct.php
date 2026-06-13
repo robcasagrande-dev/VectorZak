@@ -61,6 +61,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $step = 2;
         $rcode = $_POST['rcode'] ?? '';
         $internalId = $_POST['internal_id'] ?? '';
+        $guestName = $_POST['guest_name'] ?? 'Huésped';
+        $dfrom = $_POST['dfrom'] ?? '';
+        $dto = $_POST['dto'] ?? '';
         $invoicesJson = $_POST['invoices_json'] ?? '[]';
         $invoices = json_decode($invoicesJson, true);
         
@@ -119,6 +122,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $zakApi = new \VectorZak\ZakApiClient();
                 $reservation = $zakApi->fetchReservationByCode($rcode);
                 $internalId = $reservation['id'];
+                $guestName = $reservation['guest_name'] ?? 'Huésped';
+                $dfrom = $reservation['dfrom'] ?? '';
+                $dto = $reservation['dto'] ?? '';
                 
                 // Format check-in/out dates as YYYY-MM-DD
                 $dfromParts = explode('/', $reservation['dfrom']);
@@ -191,7 +197,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $facCol = getColIndex($headerMap, ["Factura", "No. Factura", "Nro Factura", "ID Factura", "Consecutivo", "Factura ID"]);
                 $totCol = getColIndex($headerMap, ["Total Pagado", "Total", "Valor", "Monto", "Neto", "Pagado"]);
                 $dateCol = getColIndex($headerMap, ["Fecha", "Fecha Factura", "Día", "Dia"]);
-                $vendCol = getColIndex(headerMap, ["Vendedor", "Mesero", "Usuario", "Atendió", "Atendio", "Operador"]);
+                $vendCol = getColIndex($headerMap, ["Vendedor", "Mesero", "Usuario", "Atendió", "Atendio", "Operador"]);
                 
                 $maxIndex = max($docCol, $facCol, $totCol, $dateCol, $vendCol);
                 
@@ -272,8 +278,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
         <?php elseif ($step === 1): ?>
             <h1>Previsualización de Facturas</h1>
-            <p>Sincronización para la reserva <strong><?= htmlspecialchars($rcode) ?></strong> (<?= htmlspecialchars($reservation['guest_name']) ?>)</p>
-            <p style="color: #666; font-size: 0.9em; margin-bottom: 1.5rem;">Periodo de Estadía: <?= htmlspecialchars($reservation['dfrom']) ?> al <?= htmlspecialchars($reservation['dto']) ?></p>
+            
+            <div class="reservation-card" style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 6px; padding: 1.25rem; margin-bottom: 1.5rem; border-left: 4px solid #00bcd4;">
+                <h3 style="margin-top: 0; margin-bottom: 0.75rem; font-size: 1.1rem; color: #495057;">Datos de la Reserva</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; font-size: 0.95rem; color: #333;">
+                    <div><strong>Código ZaK:</strong> <span style="font-family: monospace; font-size: 1.05rem; background: #e9ecef; padding: 2px 6px; border-radius: 4px;"><?= htmlspecialchars($rcode) ?></span></div>
+                    <div><strong>ID Interno:</strong> <?= htmlspecialchars($internalId) ?></div>
+                    <div><strong>Huésped:</strong> <?= htmlspecialchars($guestName) ?></div>
+                    <div><strong>Check-in:</strong> <?= htmlspecialchars($dfrom) ?></div>
+                    <div><strong>Check-out:</strong> <?= htmlspecialchars($dto) ?></div>
+                </div>
+            </div>
             
             <?php if (empty($cleanInvoices)): ?>
                 <div class="warning-alert">
@@ -310,7 +325,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <input type="hidden" name="confirm" value="1">
                     <input type="hidden" name="rcode" value="<?= htmlspecialchars($rcode) ?>">
                     <input type="hidden" name="internal_id" value="<?= htmlspecialchars($internalId) ?>">
-                    <input type="hidden" name="guest_name" value="<?= htmlspecialchars($reservation['guest_name']) ?>">
+                    <input type="hidden" name="guest_name" value="<?= htmlspecialchars($guestName) ?>">
+                    <input type="hidden" name="dfrom" value="<?= htmlspecialchars($dfrom) ?>">
+                    <input type="hidden" name="dto" value="<?= htmlspecialchars($dto) ?>">
                     <input type="hidden" name="invoices_json" value="<?= htmlspecialchars(json_encode($cleanInvoices)) ?>">
                     
                     <div class="btn-container">
@@ -322,6 +339,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
         <?php elseif ($step === 2): ?>
             <h1>Resultado de Sincronización Directa</h1>
+            
+            <div class="reservation-card" style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 6px; padding: 1.25rem; margin-bottom: 1.5rem; border-left: 4px solid #28a745;">
+                <h3 style="margin-top: 0; margin-bottom: 0.75rem; font-size: 1.1rem; color: #495057;">Datos de la Reserva</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; font-size: 0.95rem; color: #333;">
+                    <div><strong>Código ZaK:</strong> <span style="font-family: monospace; font-size: 1.05rem; background: #e9ecef; padding: 2px 6px; border-radius: 4px;"><?= htmlspecialchars($rcode) ?></span></div>
+                    <div><strong>ID Interno:</strong> <?= htmlspecialchars($internalId) ?></div>
+                    <div><strong>Huésped:</strong> <?= htmlspecialchars($guestName) ?></div>
+                    <div><strong>Check-in:</strong> <?= htmlspecialchars($dfrom) ?></div>
+                    <div><strong>Check-out:</strong> <?= htmlspecialchars($dto) ?></div>
+                </div>
+            </div>
             
             <div class="section success">
                 <h2>Registrados exitosamente (<?= count($successes) ?>)</h2>
