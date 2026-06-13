@@ -26,16 +26,15 @@ Follow these steps to configure the project locally on your machine.
 
 3. **Configure the Environment**:
 
-   **Automated Method (Recommended):**
-   This project is integrated with the `SmartCheckIn Suite` centralized configuration system.
-   1. Ensure the `SmartCheckInSuite` repository is cloned in the same `~/Projects` directory.
-   2. Edit `~/Projects/SmartCheckIn Suite/SharedConfig/config.json` to include your VectorZak credentials (`ZAK_API_KEY`, `ZAK_LCODE`, `VECTOR_APP_USER`, `VECTOR_APP_PASS`).
-   3. Run the sync script from the `SharedConfig` directory:
-      ```bash
-      cd ~/Projects/SmartCheckIn\ Suite/SharedConfig
-      python sync_config.py
-      ```
-      This will automatically generate the `config.php` file in the VectorZak folder.
+    **Automated Method (Recommended):**
+    This project is integrated with the `SmartCheckIn Suite` centralized configuration system.
+    1. Ensure the `SmartCheckInSuite` repository is cloned in the same `Projects` directory.
+    2. Run the sync script from the `SharedConfig` directory inside `SmartCheckInSuite`:
+       ```bash
+       cd ~/Projects/SmartCheckInSuite/SharedConfig
+       python3 sync_config.py
+       ```
+       *Note: The script will automatically search your mounted Google Drive for the master `config.json` and copy it to the local workspace before generating `config.php`.*
 
    **Manual Method:**
    Alternatively, you can configure it manually by copying the example file:
